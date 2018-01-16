@@ -17,6 +17,7 @@ def preprocess():
         reader = csv.reader(f)
         terms = [row[0] for row in reader if row[0]]
     # Sort the terms (case-insensitive) based on dictionary order
+    terms = list(set([x.lower() for x in terms]))
     sterms = sorted(terms, key=lambda x: (x.lower(), len(x)))
     return sterms
 
