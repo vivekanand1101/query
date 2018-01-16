@@ -3,7 +3,7 @@ import json
 import unittest
 
 import server
-from server import STERMS, SEARCH_LEN, STERMS_LEN, binsearch, edit_distance
+from server import SEARCH_LEN, binsearch, edit_distance
 
 EXPECTED_SEARCH_OUTPUTS = {
     'rohit': ['rohitwilliam', 'rohityadav', 'rohiy', 'rohiya', 'rohnit',
