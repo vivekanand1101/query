@@ -28,8 +28,14 @@
         url: 'http://127.0.0.1:8888/auto',
         dataType: 'json'
       },
-      templateResult: function(e) { return e.name; },
-      templateSelection: function(e) { return e.name; }
+      templateResult: function(e) {
+        console.log(e);
+        return (e.name + " - " + e.score);
+      },
+      templateSelection: function(e) {
+        console.log(e);
+        return (e.name + " - " + e.score);
+      }
     });
   </script>
 </body>

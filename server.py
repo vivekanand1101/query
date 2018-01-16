@@ -1,5 +1,6 @@
 # coding=utf-8
 import csv
+import math
 import os
 
 import flask
@@ -76,8 +77,12 @@ def hello_world():
         results = []
     else:
         results = binsearch(query)
-        results = sorted(results, key=lambda x: (distance(x, query), len(x)))
-        results = [{'name': x} for x in results]
+        distances = {}
+        for result in results:
+            distances[result] = distance(result, query)
+        results = sorted(results, key=lambda x: (distances[x], len(x)))
+        results = [{'name': x, 'score': distances[x] \
+            if not math.isinf(distances[x]) else "matching"} for x in results]
 
     resp = jsonify(results=results[:SEARCH_LEN])  # top 10 results
     resp.headers['Access-Control-Allow-Origin'] = '*'
