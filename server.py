@@ -8,23 +8,23 @@ from flask import Flask, jsonify, request
 app = Flask(__name__)
 
 FILE = os.environ.get("FILE", "data.csv")
+SEARCH_LEN = 10
 
 
-with open(FILE) as f:
-    reader = csv.reader(f)
-    terms = [row[0] for row in reader if row[0]]
-
-def fsort():
+def preprocess():
+    ''' Preload the data from csv '''
+    with open(FILE) as f:
+        reader = csv.reader(f)
+        terms = [row[0] for row in reader if row[0]]
+    # Sort the terms (case-insensitive) based on dictionary order
     sterms = sorted(terms, key=lambda x: (x.lower(), len(x)))
     return sterms
 
-STERMS = fsort()
+STERMS = preprocess()
 STERMS_LEN = len(STERMS)
-SEARCH_LEN = 10
 
 def binsearch(target):
-    ''' Searching through the sorted list for the query
-    and range it down to SEARCH_LEN elements '''
+    ''' Implement binary search and range search down to SEARCH_LEN elements '''
     start = 0
     end = STERMS_LEN -1
     target = target.lower()
@@ -41,9 +41,13 @@ def binsearch(target):
     return STERMS[start:end]
 
 
-def distance(given_str, target_str):
-    ''' Implement levenshtein distance, returns distance between the given
-    string and target string '''
+def edit_distance(given_str, target_str):
+    ''' Gives edit distance between two strings, in case the given string start
+    with target string, returns negative infinity so that it gets at top when
+    sorted based on distance
+    :args given_str: a term from csv on which we are checking for distance
+    :args target_str: the query term from request
+    '''
 
     if given_str == target_str:
         return 0
@@ -51,7 +55,8 @@ def distance(given_str, target_str):
         return len(target_str)
     elif len(target_str) == 0:
         return len(given_str)
-    elif given_str.lower().startswith(target_str.lower()):
+    # If the given_str starts with target element, we want to put them first
+    elif given_str.decode('utf-8').lower().startswith(target_str.lower()):
         return -float('Inf')
     v0 = [None] * (len(target_str) + 1)
     v1 = [None] * (len(target_str) + 1)
@@ -69,6 +74,7 @@ def distance(given_str, target_str):
 
 @app.route('/auto')
 def hello_world():
+    ''' Searches the data from csv for the query element and returns a dict '''
     query = request.args.get("q", '')
     results = []  # must be list of dicts: [{"name": "foo"}, {"name": "bar"}]
 
@@ -76,10 +82,12 @@ def hello_world():
     if len(query) < 3:
         results = []
     else:
+        # First narrow down the search to SEARCH_LEN relevant elements
         results = binsearch(query)
+        # Get the distances between the target element and relevant elements
         distances = {}
         for result in results:
-            distances[result] = distance(result, query)
+            distances[result] = edit_distance(result, query)
         results = sorted(results, key=lambda x: (distances[x], len(x)))
         results = [{'name': x, 'score': distances[x] \
             if not math.isinf(distances[x]) else "matching"} for x in results]
